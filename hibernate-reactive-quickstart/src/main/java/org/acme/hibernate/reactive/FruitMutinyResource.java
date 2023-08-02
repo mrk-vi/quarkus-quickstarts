@@ -16,10 +16,14 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import io.smallrye.mutiny.Uni;
+import io.vertx.core.http.HttpServerRequest;
+import org.hibernate.reactive.mutiny.Mutiny;
 import org.hibernate.reactive.mutiny.Mutiny.SessionFactory;
+import org.jboss.logging.Logger;
 
 @Path("fruits")
 @ApplicationScoped
@@ -27,11 +31,19 @@ import org.hibernate.reactive.mutiny.Mutiny.SessionFactory;
 @Consumes("application/json")
 public class FruitMutinyResource {
 
+    private static final Logger LOG = Logger.getLogger(FruitMutinyResource.class);
+
+    @Context
+    HttpServerRequest serverRequest;
+
     @Inject
     SessionFactory sf;
 
     @GET
     public Uni<List<Fruit>> get() {
+
+        LOG.infof("Lang param %s", serverRequest.getParam("lang"));
+
         return sf.withTransaction((s,t) -> s
                 .createNamedQuery("Fruits.findAll", Fruit.class)
                 .getResultList()
@@ -51,7 +63,7 @@ public class FruitMutinyResource {
         }
 
         return sf.withTransaction((s,t) -> s.persist(fruit))
-                .replaceWith(Response.ok(fruit).status(CREATED)::build);
+            .replaceWith(Response.ok(fruit).status(CREATED)::build);
     }
 
     @PUT
@@ -62,10 +74,11 @@ public class FruitMutinyResource {
         }
 
         return sf.withTransaction((s,t) -> s.find(Fruit.class, id)
-                .onItem().ifNull().failWith(new WebApplicationException("Fruit missing from database.", NOT_FOUND))
+            .onItem().ifNull().failWith(new WebApplicationException("Fruit missing from database.", NOT_FOUND))
                 // If entity exists then update it
-                .invoke(entity -> entity.setName(fruit.getName())))
-                .map(entity -> Response.ok(entity).build());
+                .invoke(entity -> entity.setName(fruit.getName()))
+                .invoke(entity -> entity.setName(fruit.getName() + " tradottissimo", "tr_TR"))
+                .map(entity -> Response.ok(entity).build()));
     }
 
     @DELETE
