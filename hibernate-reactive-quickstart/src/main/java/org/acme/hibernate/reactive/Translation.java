@@ -1,17 +1,42 @@
 package org.acme.hibernate.reactive;
 
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.Nationalized;
+import org.hibernate.annotations.NaturalId;
 
-import javax.persistence.EmbeddedId;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.Objects;
 
 @Entity
-public class Translation {
+@Table(
+	indexes = {
+		@Index(
+			name = "idx_translation_pk",
+			columnList = "language, class_name, class_pk, key",
+			unique = true
+		),
+		@Index(
+			name = "idx_translation_entities",
+			columnList = "class_name, class_pk"
+		)
+	}
+)
+public class Translation implements BaseEntity {
 
-	@EmbeddedId
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Integer id;
+	@Embedded
+	@NaturalId
 	private TranslationKey pk;
+	@Nationalized
 	private String value;
 
 	public TranslationKey getPk() {
@@ -80,6 +105,15 @@ public class Translation {
 
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(pk);
+		return Objects.hash(id, pk);
+	}
+
+	@Override
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
 	}
 }
