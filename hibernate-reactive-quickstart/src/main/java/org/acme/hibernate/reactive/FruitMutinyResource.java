@@ -44,6 +44,18 @@ public class FruitMutinyResource {
         return sf.withTransaction((s,t) -> s.find(Fruit.class, id));
     }
 
+    @GET
+    @Path("{tenant}/{id}")
+    public Uni<Fruit> getSingleTenant(Integer id) {
+        return sf.withTransaction((s,t) -> s.find(Fruit.class, id));
+    }
+
+    @GET
+    @Path("setTenant/{id}")
+    public Uni<Fruit> getSingleTenant2(Integer id) {
+        return sf.withTransaction("base", (s,t) -> s.find(Fruit.class, id));
+    }
+
     @POST
     public Uni<Response> create(Fruit fruit) {
         if (fruit == null || fruit.getId() != null) {
