@@ -2,14 +2,17 @@ package org.acme.hibernate.reactive;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.NamedQuery;
-import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @Entity
+@EntityListeners({
+    InvalidateCacheTriggerListener.class
+})
 @Table(name = "known_fruits")
 @NamedQuery(name = "Fruits.findAll", query = "SELECT f FROM Fruit f ORDER BY f.name")
 public class Fruit {

@@ -18,7 +18,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import io.quarkus.cache.Cache;
+import io.quarkus.cache.CacheName;
+import io.quarkus.cache.CompositeCacheKey;
 import io.smallrye.mutiny.Uni;
+import org.acme.cache.CacheUtils;
 import org.hibernate.reactive.mutiny.Mutiny.SessionFactory;
 
 @Path("fruits")
@@ -30,12 +34,21 @@ public class FruitMutinyResource {
     @Inject
     SessionFactory sf;
 
+    @Inject
+    @CacheName("fruits-cache")
+    Cache cache;
+
     @GET
     public Uni<List<Fruit>> get() {
-        return sf.withTransaction((s,t) -> s
-                .createNamedQuery("Fruits.findAll", Fruit.class)
-                .getResultList()
+
+        CompositeCacheKey cacheKey = new CompositeCacheKey("cachedValue");
+        Uni<List<Fruit>> dbCall = sf.withTransaction((s, t) -> s
+            .createNamedQuery("Fruits.findAll", Fruit.class)
+            .getResultList()
         );
+
+        return CacheUtils.getAsync(cache, cacheKey, dbCall);
+
     }
 
     @GET
